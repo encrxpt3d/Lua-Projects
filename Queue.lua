@@ -1,8 +1,3 @@
-local Queue = {}
-local _Queues = {}
-
-Queue.__index = Queue
-
 -- Local Functions
 local function getNumIndexes(tbl)
     local num = 0
@@ -25,24 +20,34 @@ local function printTable(tbl, depth)
     depth = depth or 0
     for k, v in pairs(tbl) do
         if type(v) == "table" then
+            if depth > 0 then
+                print(string.rep(" ", depth) .. k .. ":")
+            else
+                print(k .. ": ")
+            end
             printTable(v, depth + 4)
         else
             if depth > 0 then
-                print(string.rep(" ", depth) .. k .. ": " .. v)
+                print(string.rep(" ", depth) .. k .. ": " .. v .. ",")
             else
-                print(k .. ": " .. v)
+                print(k .. ": " .. v .. ",")
             end
         end
     end
 end
 
 local function wait(s)
+    s = s or 0.01
     local old = os.clock()
-    repeat until os.clock() - old >= s --and s or 0.01
+    repeat until os.clock() - old >= s
     return true
 end
 
 -- Queue Initializer
+
+local Queue = {}
+local _Queues = {}
+Queue.__index = Queue
 
 Queue.new = function(queueName)
     queueName = queueName or ("Queue_" .. getNumIndexes(_Queues) + 1)
