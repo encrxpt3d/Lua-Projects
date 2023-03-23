@@ -44,7 +44,6 @@ local function wait(s)
 end
 
 -- Queue Initializer
-
 local Queue = {}
 local _Queues = {}
 Queue.__index = Queue
@@ -64,8 +63,19 @@ Queue.delete = function(queueName)
 end
 
 -- Queue Functions
+function Queue:setFunc(fn)
+    self._Func = fn
+end
 
-function Queue:add(key, value)
+function Queue:run(...)
+    self:_add(getNumIndexes(self.Queue) + 1, "_run")
+    repeat until getNumIndexes(self.Queue) <= 1
+    self._Func(...)
+    self:_done()
+end
+
+-- Private Functions
+function Queue:_add(key, value)
     if not value then
         self.Queue[getNumIndexes(self.Queue) + 1] = key
     else
@@ -73,7 +83,7 @@ function Queue:add(key, value)
     end
 end
 
-function Queue:remove(data)
+function Queue:_remove(data)
     if self.Queue[data] then
         self.Queue[data] = nil
     else
@@ -84,32 +94,20 @@ function Queue:remove(data)
     end
 end
 
-function Queue:done()
-    self:remove(1)
+function Queue:_done()
+    self:_remove(1)
 end
 
-function Queue:next()
-    return self.Queue[getNumIndexes(self.Queue) + 1]
-end
+-- Example Queue
+local ExampleQueue = Queue.new("Test")
 
-function Queue:run(...)
-    self:add(getNumIndexes(self.Queue) + 1, "_run")
-    repeat until getNumIndexes(self.Queue) <= 1
-    self.Func(...)
-    self:done()
-end
-
--- Test
-
-local TestQueue = Queue.new("Test")
-
-TestQueue.Func = function(...)
-    print(string.format("Waiting for %s seconds...", ...))
-    repeat until wait(...)
-    print(string.format("Done waiting for %s seconds!\n", ...))
-end
+ExampleQueue:setFunc(function(s)
+    print(string.format("Waiting for %s seconds...", s))
+    repeat until wait(s)
+    print(string.format("Done waiting for %s seconds!\n", s))
+end)
 
 print()
-TestQueue:run(5)
-TestQueue:run(2)
-TestQueue:run(4)
+ExampleQueue:run(5)
+ExampleQueue:run(2)
+ExampleQueue:run(4)
