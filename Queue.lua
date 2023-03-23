@@ -37,7 +37,7 @@ local function printTable(tbl, depth)
 end
 
 local function wait(s)
-    s = s or 0.01
+    s = s or 0
     local old = os.clock()
     repeat until os.clock() - old >= s
     return true
@@ -69,7 +69,7 @@ end
 
 function Queue:run(...)
     self:_add(getNumIndexes(self.Queue) + 1, "_run")
-    repeat until getNumIndexes(self.Queue) <= 1
+    repeat wait() until getNumIndexes(self.Queue) <= 1
     self._Func(...)
     self:_done()
 end
@@ -103,7 +103,7 @@ local ExampleQueue = Queue.new("Test")
 
 ExampleQueue:setFunc(function(s)
     print(string.format("Waiting for %s seconds...", s))
-    repeat until wait(s)
+    repeat wait() until wait(s)
     print(string.format("Done waiting for %s seconds!\n", s))
 end)
 
