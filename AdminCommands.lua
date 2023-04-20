@@ -1,11 +1,8 @@
-print()
-local prefix = "/"
+for i = 1, 10 do
+	print()
+end
 
-local commandTypes = {
-	kick = {
-		stringArg = true,
-	},
-}
+local prefix = "/"
 
 local players = {
 	["encrxpted"] = {
@@ -23,6 +20,13 @@ local players = {
 
 local admins = {
 	["106098306"] = "encrxpt3d",
+}
+
+local commands = {}
+local commandTypes = {
+	kick = {
+		stringArg = true,
+	},
 }
 
 local function findPlayer(shortName)
@@ -77,8 +81,6 @@ local function checkForString(source, args)
 					return print("Invalid string beginning; you must start the string with a <\n  At: " .. source[2])
 				end
 			end
-		elseif not char:find("[%s<]") then
-			return --print("Invalid character: " .. char)
 		end
 	end
 end
@@ -96,10 +98,14 @@ local function checkForTarget(options)
 			end
 			shift(options.source)
 			
-			local plr = findPlayer(target)
-			if not plr then return print(target .. " could not be found in this server.") end
-
-			table.insert(options.args, plr)
+			if target == "all" or target == "me" or target == "others" then
+				table.insert(options.args, target)
+			else
+				local plr = findPlayer(target)
+				if not plr then return print(target .. " could not be found in this server.") end
+	
+				table.insert(options.args, plr)
+			end
 		end
 	end
 	
@@ -108,35 +114,43 @@ local function checkForTarget(options)
 	end
 end
 
-local commands = {
-	kick = function(options)
-		checkForTarget({
-			plr = options.plr,
-			source = options.source,
-			args = options.args,
-			arg = 2
-		})
-		if not options.args[2] then return end
-		checkForString(options.source, options.args)
+commands["kick"] = function(options)
+	checkForTarget({
+		plr = options.plr,
+		source = options.source,
+		args = options.args,
+		arg = 2
+	})
+	if not options.args[2] then return end
+	checkForString(options.source, options.args)
 
-		local target = options.args[2]
-		local reason = options.args[3]
+	local target = options.args[2]
+	local reason = options.args[3]
+	local kickMsg = ""
 
-		if reason then
-			if target.Name == options.plr.Name then
-				print(string.format("You have been kicked from the server by %s; reason: %s", options.plr.Name, reason))
-			else
-				print(string.format("%s has been kicked from the server by %s; reason: %s", target.Name, options.plr.Name, reason))
-			end
-		else
-			if target.Name == options.plr.Name then
-				print(string.format("You have been kicked from the server by %s.", options.plr.Name))
-			else
-				print(string.format("%s has been kicked from the server by %s.", target.Name, options.plr.Name))
+	if target == "all" or target == "others" then
+		for _, player in pairs(players) do
+			if target == "all" or target == "others" and player.Name ~= options.plr.Name then
+				if player.Name == options.plr.Name then
+					kickMsg = ("You have been kicked from the server by %s"):format(player.Name)
+				else
+					kickMsg = ("%s has been kicked from the server by %s"):format(player.Name, options.plr.Name)
+				end
+				kickMsg = reason and kickMsg .. "; reason: " .. reason or kickMsg .. "."
+				print(kickMsg)
 			end
 		end
-	end,
-}
+
+		return
+	elseif target == "me" or target.Name == options.plr.Name then
+		kickMsg = ("You have been kicked from the server by %s"):format(options.plr.Name)
+	else
+		kickMsg = ("%s has been kicked from the server by %s"):format(target.Name, options.plr.Name)
+	end
+	
+	kickMsg = reason and kickMsg .. "; reason: " .. reason or kickMsg .. "."
+	print(kickMsg)
+end
 
 local function onMessage(plr, msg)
 	if not players[plr.Name] then return end
@@ -173,28 +187,40 @@ local function onMessage(plr, msg)
 	})
 end
 
--- onMessage(findPlayer("enc"), "/kick byte <is bad>")
--- onMessage(findPlayer("en"), "/kick by <another string hehe! xd> easports")
--- onMessage(findPlayer("enc"), "/kick by <hehe> <yesir works!> <yet another> <fourth str wow> <oo fifth>")
--- onMessage(findPlayer("encrypt"), "/kick enc <U ARE MID NOOB>")
+pcall(function()
+	io.write("Input your username here: ")
+	local name = io.read()
+	if #name == 0 or name == " " or not name then return end
+	
+	io.write("Input your display name here: ")
+	local displayName = io.read()
+	if #displayName == 0 or displayName == " " or not displayName then return end
+	
+	players[name] = {
+		Name = name,
+		DisplayName = displayName,
+		UserId = 39851908609
+	}
+	
+	admins[tostring(players[name].UserId)] = name
+	
+	while true do
+		io.write("\n/")
+	
+		local msg
+		pcall(function()
+			msg = io.read()
+		end)
+	
+		if not msg then
+			break
+		end
+	
+		if not msg:find("%s", 1) or msg ~= "/" or msg ~= "" then
+			pcall(onMessage, players[name], msg)
+		end
+	end
+end)
 
-io.write("Input your username here: ")
-local name = io.read()
-
-io.write("Input your display name here: ")
-local displayName = io.read()
-
-players[name] = {
-	Name = name,
-	DisplayName = displayName,
-	UserId = 39851908609
-}
-
-admins[tostring(players[name].UserId)] = name
-
-while true do
-	io.write("\n/")
-
-	local msg = io.read()
-	onMessage(players[name], msg)
-end
+print()
+print()
