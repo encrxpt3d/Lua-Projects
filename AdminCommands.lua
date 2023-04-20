@@ -83,41 +83,56 @@ local function checkForString(source, args)
 	end
 end
 
-local commands = {
-	kick = function(plr, source, args)
-		for _, char in pairs(source) do
-			if char:find("[A-Za-z]") and not args[2] then
-				local target = ""
-				
-				while #source > 0 do
-					if source[1] == nil or source[1] == " " then break end
-					target = target .. shift(source)
-				end
-				shift(source)
-				
-				local plr = findPlayer(target)
-				if not plr then return warn(target .. " could not be found in this server.") end
-	
-				table.insert(args, plr)
-			end
-		end
-	
-		checkForString(source, args)
+local function checkForTarget(options)
+	for _, char in pairs(options.source) do
+		if char:find("[A-Za-z]") and not options.args[options.arg] then
+			if options.source[1] == "<" or options.source[1] == ">" then break end
 
-		local target = args[2]
-		local reason = args[3]
+			local target = ""
+			
+			while #options.source > 0 do
+				if options.source[1] == nil or options.source[1] == " " then break end
+				target = target .. shift(options.source)
+			end
+			shift(options.source)
+			
+			local plr = findPlayer(target)
+			if not plr then return print(target .. " could not be found in this server.") end
+
+			table.insert(options.args, plr)
+		end
+	end
+	
+	if not options.args[options.arg] then
+		options.args[options.arg] = options.plr
+	end
+end
+
+local commands = {
+	kick = function(options)
+		checkForTarget({
+			plr = options.plr,
+			source = options.source,
+			args = options.args,
+			arg = 2
+		})
+		if not options.args[2] then return end
+		checkForString(options.source, options.args)
+
+		local target = options.args[2]
+		local reason = options.args[3]
 
 		if reason then
-			if target.Name == plr.Name then
-				print(string.format("You have been kicked from the server by %s; reason: %s", plr.Name, reason))
+			if target.Name == options.plr.Name then
+				print(string.format("You have been kicked from the server by %s; reason: %s", options.plr.Name, reason))
 			else
-				print(string.format("%s has been kicked from the server by %s; reason: %s", target.Name, plr.Name, reason))
+				print(string.format("%s has been kicked from the server by %s; reason: %s", target.Name, options.plr.Name, reason))
 			end
 		else
-			if target.Name == plr.Name then
-				print(string.format("You have been kicked from the server by %s.", plr.Name))
+			if target.Name == options.plr.Name then
+				print(string.format("You have been kicked from the server by %s.", options.plr.Name))
 			else
-				print(string.format("%s has been kicked from the server by %s.", target.Name, plr.Name))
+				print(string.format("%s has been kicked from the server by %s.", target.Name, options.plr.Name))
 			end
 		end
 	end,
@@ -151,11 +166,35 @@ local function onMessage(plr, msg)
 		end
 	end
 
-	commands[args[1]](plr, source, args)
+	commands[args[1]]({
+		plr = plr,
+		source = source,
+		args = args
+	})
 end
 
-onMessage(findPlayer("enc"), "/kick byte <is bad>")
-onMessage(findPlayer("en"), "/kick by <another string hehe! xd> easports")
-onMessage(findPlayer("enc"), "/kick by <hehe> <yesir works!> <yet another> <fourth str wow> <oo fifth>")
-onMessage(findPlayer("encrypt"), "/kick enc <U ARE MID NOOB>")
-print()
+-- onMessage(findPlayer("enc"), "/kick byte <is bad>")
+-- onMessage(findPlayer("en"), "/kick by <another string hehe! xd> easports")
+-- onMessage(findPlayer("enc"), "/kick by <hehe> <yesir works!> <yet another> <fourth str wow> <oo fifth>")
+-- onMessage(findPlayer("encrypt"), "/kick enc <U ARE MID NOOB>")
+
+io.write("Input your username here: ")
+local name = io.read()
+
+io.write("Input your display name here: ")
+local displayName = io.read()
+
+players[name] = {
+	Name = name,
+	DisplayName = displayName,
+	UserId = 39851908609
+}
+
+admins[tostring(players[name].UserId)] = name
+
+while true do
+	io.write("\n/")
+
+	local msg = io.read()
+	onMessage(players[name], msg)
+end
