@@ -114,43 +114,55 @@ local function checkForTarget(options)
 	end
 end
 
-commands["kick"] = function(options)
-	checkForTarget({
-		plr = options.plr,
-		source = options.source,
-		args = options.args,
-		arg = 2
-	})
-	if not options.args[2] then return end
-	checkForString(options.source, options.args)
+commands["kick"] = {
+	info = "Kicks the specified player(s) with an optional reason.",
+	init = function(options)
+		checkForTarget({
+			plr = options.plr,
+			source = options.source,
+			args = options.args,
+			arg = 2
+		})
+		if not options.args[2] then return end
+		checkForString(options.source, options.args)
 
-	local target = options.args[2]
-	local reason = options.args[3]
-	local kickMsg = ""
+		local target = options.args[2]
+		local reason = options.args[3]
+		local kickMsg = ""
 
-	if target == "all" or target == "others" then
-		for _, player in pairs(players) do
-			if target == "all" or target == "others" and player.Name ~= options.plr.Name then
-				if player.Name == options.plr.Name then
-					kickMsg = ("You have been kicked from the server by %s"):format(player.Name)
-				else
-					kickMsg = ("%s has been kicked from the server by %s"):format(player.Name, options.plr.Name)
+		if target == "all" or target == "others" then
+			for _, player in pairs(players) do
+				if target == "all" or target == "others" and player.Name ~= options.plr.Name then
+					if player.Name == options.plr.Name then
+						kickMsg = ("You have been kicked from the server by %s"):format(player.Name)
+					else
+						kickMsg = ("%s has been kicked from the server by %s"):format(player.Name, options.plr.Name)
+					end
+					kickMsg = reason and kickMsg .. "; reason: " .. reason or kickMsg .. "."
+					print(kickMsg)
 				end
-				kickMsg = reason and kickMsg .. "; reason: " .. reason or kickMsg .. "."
-				print(kickMsg)
 			end
-		end
 
-		return
-	elseif target == "me" or target.Name == options.plr.Name then
-		kickMsg = ("You have been kicked from the server by %s"):format(options.plr.Name)
-	else
-		kickMsg = ("%s has been kicked from the server by %s"):format(target.Name, options.plr.Name)
+			return
+		elseif target == "me" or target.Name == options.plr.Name then
+			kickMsg = ("You have been kicked from the server by %s"):format(options.plr.Name)
+		else
+			kickMsg = ("%s has been kicked from the server by %s"):format(target.Name, options.plr.Name)
+		end
+		
+		kickMsg = reason and kickMsg .. "; reason: " .. reason or kickMsg .. "."
+		print(kickMsg)
 	end
-	
-	kickMsg = reason and kickMsg .. "; reason: " .. reason or kickMsg .. "."
-	print(kickMsg)
-end
+}
+
+commands["help"] = {
+	info = "Displays info of all the available commands.",
+	init = function()
+		for cmdName, cmd in pairs(commands) do
+			print(string.format("%-6s : %s", cmdName, cmd.info))
+		end
+	end
+}
 
 local function onMessage(plr, msg)
 	if not players[plr.Name] then return end
@@ -180,7 +192,7 @@ local function onMessage(plr, msg)
 		end
 	end
 
-	commands[args[1]]({
+	commands[args[1]].init({
 		plr = plr,
 		source = source,
 		args = args
@@ -222,5 +234,4 @@ pcall(function()
 	end
 end)
 
-print()
-print()
+print("\n")
