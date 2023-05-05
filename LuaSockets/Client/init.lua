@@ -14,8 +14,8 @@ print("Client [" .. peername .. "] connected.\n")
 while true do
     io.write("\n> ")
 
-    client:send(io.read("l") .. "\n")
     client:settimeout(5)
+    client:send(io.read("l") .. "\n")
 
     local response, err = client:receive()
 
