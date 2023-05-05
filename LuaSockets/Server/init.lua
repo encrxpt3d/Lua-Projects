@@ -15,11 +15,11 @@ while true do
     print("Client [" .. client:getpeername() .. "] has been connected.\n")
     
     while true do
-        local data, err = client:receive()
+        local data, err = client:receive("*l")
         if not err then
             print("Server received: " .. data)
     
-            client:send(data)
+            client:send(data .. "\n")
         else
             print("Error:", err)
             break
