@@ -8,24 +8,32 @@ local server = socket.tcp()
 server:setoption("reuseaddr", true)
 server:bind("localhost", 12345)
 server:listen()
-print("\nServer [" .. server:getsockname() .. "] initialized.")
+print("\nServer [" .. server:getsockname() .. "] initialized.\n")
 
-while true do
-    local client = server:accept()
-    print("Client [" .. client:getpeername() .. "] has been connected.\n")
-    
+local function handle_client(client)
+    local pName = client:getpeername()
+    local cName = "Client [" .. client:getpeername() .. "]"
+    print("-----------------------------------\n" .. cName .. " has been connected.")
+
     while true do
         local data, err = client:receive("*l")
+
         if not err then
-            print("Server received: " .. data)
-    
+            print("-----------------------------------\nServer received: " .. data .. "\n\tfrom: " .. pName)
             client:send(data .. "\n")
         else
-            print("Error:", err)
+            print(cName .. " has failed to respond.\n\tReason:", err)
             break
         end
     end
 
-    print("Client [" .. client:getpeername() .. "] has been disconnected.\n")
+    print(cName .. " has been disconnected.")
     client:close()
+end
+
+while true do
+    local client = server:accept()
+
+    local co = coroutine.create(handle_client)
+    coroutine.resume(co, client)
 end

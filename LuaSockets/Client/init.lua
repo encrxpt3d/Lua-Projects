@@ -5,11 +5,10 @@ package.cpath = package.cpath .. ";/workspaces/Lua-Projects/lua-5.3.5/luarocks-3
 
 local socket = require("socket")
 local client = socket.tcp()
+
+print("Client establishing connection...")
 client:connect("localhost", 12345)
-
-local peername = client:getpeername()
-
-print("Client [" .. peername .. "] connected.\n")
+print("Client successfully established connection.")
 
 while true do
     io.write("\n> ")
@@ -22,10 +21,10 @@ while true do
     if not err then
         print("Client received: " .. response)
     else
-        print("Error:", err)
+        print("Server has failed to respond.\n\tReason:", err)
         break
     end
 end
 
-print("Client [" .. peername .. "]  disconnected.\n")
+print("Client has lost connection to the server.\n")
 client:close()
